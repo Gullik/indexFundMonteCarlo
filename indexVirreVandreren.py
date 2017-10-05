@@ -9,7 +9,7 @@ gullik.killie@gmail.com
 """
 
 import numpy as np
-import scipy as sp
+import matplotlib.pyplot as plt
 
 def sellStocks(portfolio, stockMarket):
 
@@ -17,15 +17,21 @@ def sellStocks(portfolio, stockMarket):
         Sells all the stocks for the current value
     """
 
-    return value
+    holdings = np.sum(portfolio[1]*stockMarket[portfolio[0]])
+
+    return holdings
 
 
-def buyStocks(portfolio, stockMarket):
+def buyStocks(holdings, portfolio, stockMarket):
     """
         Sells all stocks at current values, then uses the total value to rebuy the top 10 stocks
     """
 
-    return portfolio
+    indexes = np.argpartition(stockMarket, -10)[-10:]
+
+    newStocks = (0.1*holdings)/stockMarket[indexes]
+
+    return [indexes, newStocks]
 
 
 def virreVandrer(stockMarket):
@@ -45,18 +51,48 @@ def virreVandrer(stockMarket):
     return stockMarket
 
 
-# Create portfolio and total stock market
-stockMarket = np.ones(100)
-portfolio = np.ones([2,10])
-portfolio[0,:] = [x for x in range(10)]
+runs = 1000
+investPerformance = np.empty(runs)
 
 
+for i in range(runs):
+    # Create portfolio and total stock market
+    stocks = 10000
+    steps = 1000
 
-for t in range(100):
-
-    stockMarket = virreVandrer(stockMarket)
+    print i
 
 
-print(np.sum(stockMarket))
+    stockMarket = np.ones(stocks)
+    portfolio = [x for x in range(int(stocks*.1))],[ 1. for x in range(int(stocks*.1))]
 
-print(stockMarket)
+
+    holdings = np.empty(steps)
+    totMarket = np.empty(steps)
+
+
+    for n in range(steps):
+
+        stockMarket     = virreVandrer(stockMarket)
+        holdings[n]     = sellStocks(portfolio,stockMarket)
+        portfolio       = buyStocks(holdings[n], portfolio, stockMarket)
+        totMarket[n]    = np.sum(stockMarket)
+
+
+    nn = range(steps)
+
+    # plt.figure()
+    #
+    # plt.plot(nn, holdings/(stocks*.1))
+    # plt.plot(nn, totMarket/stocks)
+    # plt.legend(['Holdings', 'Total Market'])
+
+    investPerformance[i] = (10*holdings[-1])/totMarket[-1]
+
+# print investPerformance
+
+print("Mean performance: ", np.mean(investPerformance))
+print("Variance: ", np.var(investPerformance))
+
+
+# plt.show()
